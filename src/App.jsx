@@ -33,10 +33,10 @@ export default function App() {
       </div>
 
       <nav className="tabs">
-        <TabBtn active={tab === 'today'} onClick={() => setTab('today')} en="Today"   te="ఈ రోజు" icon={<IconSun />} />
-        <TabBtn active={tab === 'loans'} onClick={() => setTab('loans')} en="Loans"   te="అప్పులు" icon={<IconCoin />} />
-        <TabBtn active={tab === 'chit'}  onClick={() => setTab('chit')}  en="Chit"    te="చిట్టీ"  icon={<IconRing />} />
-        <TabBtn active={tab === 'more'}  onClick={() => setTab('more')}  en="More"    te="ఇంకా"   icon={<IconDots />} />
+        <TabBtn active={tab === 'today'} onClick={() => setTab('today')} label="Today" icon={<IconSun />} />
+        <TabBtn active={tab === 'loans'} onClick={() => setTab('loans')} label="Loans" icon={<IconCoin />} />
+        <TabBtn active={tab === 'chit'}  onClick={() => setTab('chit')}  label="Chit"  icon={<IconRing />} />
+        <TabBtn active={tab === 'more'}  onClick={() => setTab('more')}  label="More"  icon={<IconDots />} />
       </nav>
 
       <ToastHost />
@@ -44,12 +44,11 @@ export default function App() {
   );
 }
 
-function TabBtn({ active, onClick, icon, en, te }) {
+function TabBtn({ active, onClick, icon, label }) {
   return (
     <button className={'tab' + (active ? ' active' : '')} onClick={onClick}>
       {icon}
-      <span>{en}</span>
-      <span className="te">{te}</span>
+      <span>{label}</span>
     </button>
   );
 }

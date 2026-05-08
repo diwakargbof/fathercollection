@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BL, Sheet, Field, Spinner, toast } from '../components/ui';
+import { Sheet, Field, Spinner, toast } from '../components/ui';
 import * as db from '../db';
 
 export default function ChitScreen() {
@@ -7,9 +7,9 @@ export default function ChitScreen() {
   const [members, setMembers]     = useState([]);
   const [pays, setPays]           = useState([]);
   const [openMonth, setOpenMonth] = useState(null);
-  const [showCreate, setShowCreate]     = useState(false);
+  const [showCreate, setShowCreate]       = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [editChit, setEditChit]   = useState(false);
+  const [editChit, setEditChit]     = useState(false);
   const [editMember, setEditMember] = useState(null);
 
   async function load() {
@@ -32,17 +32,15 @@ export default function ChitScreen() {
   if (chit === null) {
     return (
       <div className="page" style={{ paddingTop: 26 }}>
-        <div className="section-h"><h1><BL en="Chit" te="చిట్టీ" /></h1></div>
+        <div className="section-h"><h1>Chit</h1></div>
         <div className="empty">
           <div className="glyph">◇</div>
-          <BL en="No chit set up yet." te="ఇంకా చిట్టీ లేదు." />
+          <div>No chit set up yet.</div>
           <div style={{ marginTop: 14 }}>
-            <button onClick={() => setShowCreate(true)}>
-              <BL en="Set up chit" te="చిట్టీ ప్రారంభించు" />
-            </button>
+            <button onClick={() => setShowCreate(true)}>Set up chit</button>
           </div>
         </div>
-        <Sheet open={showCreate} onClose={() => setShowCreate(false)} title="Set up chit" te="కొత్త చిట్టీ">
+        <Sheet open={showCreate} onClose={() => setShowCreate(false)} title="Set up chit">
           <ChitForm onSaved={() => { setShowCreate(false); load(); }} />
         </Sheet>
       </div>
@@ -72,28 +70,28 @@ export default function ChitScreen() {
   return (
     <div className="page" style={{ paddingTop: 26 }}>
       <div className="section-h">
-        <h1><BL en={chit.name} te="" /></h1>
+        <h1>{chit.name}</h1>
         <span style={{ flex: 1 }} />
         <button className="ghost tiny" onClick={() => setEditChit(true)}>Edit</button>
       </div>
 
-      {/* Summary card */}
+      {/* Summary */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="row between">
           <div className="col">
-            <span className="micro"><BL en="Monthly payment" te="నెలవారీ" /></span>
+            <span className="micro">Monthly payment</span>
             <div className="num" style={{ fontSize: 22, fontWeight: 600, marginTop: 2 }}>
               {db.fmtINR(chit.monthly_amount)}
             </div>
           </div>
           <div className="col" style={{ alignItems: 'center' }}>
-            <span className="micro"><BL en="Members" te="సభ్యులు" /></span>
+            <span className="micro">Members</span>
             <div className="num" style={{ fontSize: 22, fontWeight: 600, marginTop: 2 }}>
               {memberCount}<span className="fade" style={{ fontSize: 14 }}> / {chit.num_months}</span>
             </div>
           </div>
           <div className="col" style={{ alignItems: 'flex-end' }}>
-            <span className="micro"><BL en="Pot / month" te="మొత్తం" /></span>
+            <span className="micro">Pot / month</span>
             <div className="num" style={{ fontSize: 18, fontWeight: 600, marginTop: 2 }}>
               {db.fmtINRshort(totalPotPerMonth)}
             </div>
@@ -115,17 +113,17 @@ export default function ChitScreen() {
 
       {/* Month grid */}
       <div className="section-h">
-        <h3><BL en="Months" te="నెలలు" /></h3>
+        <h3>Months</h3>
         <span style={{ flex: 1 }} />
         <span className="small fade">tap to manage</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 22 }}>
         {monthsArr.map((m) => {
-          const recipient = memberByMonth[m];
-          const paid      = paidCount(m);
-          const full      = memberCount > 0 && paid === memberCount;
-          const isCurrent = m === currentMonth;
+          const recipient  = memberByMonth[m];
+          const paid       = paidCount(m);
+          const full       = memberCount > 0 && paid === memberCount;
+          const isCurrent  = m === currentMonth;
           const payoutDone = recipient?.payout_paid;
           return (
             <button key={m} onClick={() => setOpenMonth(m)} style={{
@@ -160,15 +158,13 @@ export default function ChitScreen() {
 
       {/* Members list */}
       <div className="section-h">
-        <h3><BL en="Members" te="సభ్యులు" /></h3>
+        <h3>Members</h3>
         <span style={{ flex: 1 }} />
         <button className="ghost tiny" onClick={() => setShowAddMember(true)}>+ Add</button>
       </div>
 
       {members.length === 0 ? (
-        <div className="empty">
-          <BL en="No members yet — add up to" te="సభ్యులను చేర్చండి —" /> {chit.num_months}.
-        </div>
+        <div className="empty">No members yet — add up to {chit.num_months}.</div>
       ) : (
         <div className="col" style={{ gap: 6 }}>
           {members.map((m) => {
@@ -202,8 +198,7 @@ export default function ChitScreen() {
 
       {/* Sheets */}
       <Sheet open={openMonth != null} onClose={() => setOpenMonth(null)}
-             title={openMonth ? `Month ${String(openMonth).padStart(2,'0')} · ${db.ymToLabel(db.addMonths(chit.start_year_month, openMonth - 1))}` : ''}
-             te="నెల">
+             title={openMonth ? `Month ${String(openMonth).padStart(2,'0')} · ${db.ymToLabel(db.addMonths(chit.start_year_month, openMonth - 1))}` : ''}>
         {openMonth ? (
           <MonthSheet
             chit={chit} month={openMonth} members={members}
@@ -214,13 +209,13 @@ export default function ChitScreen() {
         ) : null}
       </Sheet>
 
-      <Sheet open={showAddMember} onClose={() => setShowAddMember(false)} title="Add member" te="కొత్త సభ్యులు">
+      <Sheet open={showAddMember} onClose={() => setShowAddMember(false)} title="Add member">
         <MemberForm chit={chit} existingMonths={members.map((m) => m.payout_month)}
                     onSaved={() => { setShowAddMember(false); load(); }} />
       </Sheet>
 
       <Sheet open={!!editMember} onClose={() => setEditMember(null)}
-             title={editMember ? editMember.name : ''} te="మార్చు">
+             title={editMember ? editMember.name : ''}>
         {editMember ? (
           <MemberForm
             chit={chit} initial={editMember}
@@ -231,7 +226,7 @@ export default function ChitScreen() {
         ) : null}
       </Sheet>
 
-      <Sheet open={editChit} onClose={() => setEditChit(false)} title="Edit chit" te="మార్చు">
+      <Sheet open={editChit} onClose={() => setEditChit(false)} title="Edit chit">
         <ChitForm initial={chit} onSaved={() => { setEditChit(false); load(); }} />
       </Sheet>
     </div>
@@ -269,8 +264,8 @@ function MonthSheet({ chit, month, members, pays, recipient, onChange }) {
     } catch { toast("Couldn't update"); }
   }
 
-  const collected    = members.reduce((s, m) => s + (paidIdx[m.id] ? Number(paidIdx[m.id].amount || chit.monthly_amount) : 0), 0);
-  const totalNeeded  = members.length * Number(chit.monthly_amount);
+  const collected   = members.reduce((s, m) => s + (paidIdx[m.id] ? Number(paidIdx[m.id].amount || chit.monthly_amount) : 0), 0);
+  const totalNeeded = members.length * Number(chit.monthly_amount);
 
   return (
     <div>
@@ -280,14 +275,12 @@ function MonthSheet({ chit, month, members, pays, recipient, onChange }) {
           background: recipient.payout_paid ? 'rgba(74,124,89,.08)' : 'var(--surface)',
           borderColor: recipient.payout_paid ? 'var(--success)' : 'var(--gold)',
         }}>
-          <span className="micro" style={{ color: 'var(--gold)' }}>
-            <BL en="This month's recipient" te="ఈ నెల పేకాలువారు" />
-          </span>
+          <span className="micro" style={{ color: 'var(--gold)' }}>This month's recipient</span>
           <div className="row between" style={{ marginTop: 4 }}>
             <div className="col">
               <div style={{ fontSize: 20, fontWeight: 600 }}>{recipient.name}</div>
               <div className="small">
-                <BL en="receives" te="పొందుతారు" />{' '}
+                receives{' '}
                 <span className="num gold" style={{ fontWeight: 600 }}>{db.fmtINR(recipient.payout_amount)}</span>
               </div>
             </div>
@@ -308,7 +301,7 @@ function MonthSheet({ chit, month, members, pays, recipient, onChange }) {
 
       <div className="row between" style={{ marginBottom: 10 }}>
         <span className="small">
-          <BL en="Collected" te="వసూలు" />:{' '}
+          Collected:{' '}
           <span className="num" style={{ fontWeight: 600 }}>{db.fmtINR(collected)}</span>
           <span className="fade"> / {db.fmtINR(totalNeeded)}</span>
         </span>
@@ -361,18 +354,18 @@ function ChitForm({ initial, onSaved }) {
 
   return (
     <form onSubmit={save}>
-      <Field label="Name" te="పేరు">
+      <Field label="Name">
         <input value={name} onChange={(e) => setName(e.target.value)} required />
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Field label="Monthly amount" te="నెలవారీ">
+        <Field label="Monthly amount (₹)">
           <input type="number" inputMode="numeric" value={monthly} onChange={(e) => setMonthly(e.target.value)} required />
         </Field>
-        <Field label="Months" te="నెలలు">
+        <Field label="Months">
           <input type="number" inputMode="numeric" value={num} onChange={(e) => setNum(e.target.value)} required />
         </Field>
       </div>
-      <Field label="Start month" te="ప్రారంభం" hint="YYYY-MM">
+      <Field label="Start month" hint="YYYY-MM">
         <input value={start} onChange={(e) => setStart(e.target.value)} placeholder="2024-01" required />
       </Field>
       <button type="submit" disabled={busy} style={{ width: '100%' }}>
@@ -424,25 +417,25 @@ function MemberForm({ chit, initial, existingMonths, onSaved, onDeleted }) {
 
   return (
     <form onSubmit={save}>
-      <Field label="Name" te="పేరు">
+      <Field label="Name">
         <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
       </Field>
-      <Field label="Phone" te="ఫోన్" hint="optional">
+      <Field label="Phone" hint="optional">
         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Field label="Payout month" te="నెల">
+        <Field label="Payout month">
           <select value={month} onChange={(e) => setMonth(e.target.value)} required>
             <option value="">—</option>
             {initial ? <option value={initial.payout_month}>{initial.payout_month} (current)</option> : null}
             {freeMonths.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </Field>
-        <Field label="Payout ₹" te="మొత్తం">
+        <Field label="Payout (₹)">
           <input type="number" inputMode="numeric" value={payout} onChange={(e) => setPayout(e.target.value)} required />
         </Field>
       </div>
-      <Field label="Notes" te="గమనికలు" hint="optional">
+      <Field label="Notes" hint="optional">
         <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
       <div className="row" style={{ gap: 8 }}>

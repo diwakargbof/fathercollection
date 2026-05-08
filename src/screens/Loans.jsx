@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BL, Sheet, Field, Spinner, toast, prettyDate } from '../components/ui';
+import { Sheet, Field, Spinner, toast, prettyDate } from '../components/ui';
 import * as db from '../db';
 
 export default function LoansScreen({ focusId, clearFocus }) {
@@ -37,7 +37,7 @@ export default function LoansScreen({ focusId, clearFocus }) {
   return (
     <div className="page" style={{ paddingTop: 26 }}>
       <div className="section-h">
-        <h1><BL en="Loans" te="అప్పులు" /></h1>
+        <h1>Loans</h1>
         <span style={{ flex: 1 }} />
         {borrowers ? (
           <span className="small num">{borrowers.filter((b) => b.status === 'active').length} active</span>
@@ -49,11 +49,9 @@ export default function LoansScreen({ focusId, clearFocus }) {
       ) : borrowers.length === 0 ? (
         <div className="empty">
           <div className="glyph">∅</div>
-          <BL en="No loans recorded yet." te="ఇంకా అప్పులు లేవు." />
+          <div>No loans recorded yet.</div>
           <div style={{ marginTop: 14 }}>
-            <button onClick={() => setShowAdd(true)}>
-              <BL en="Add first borrower" te="మొదటి అప్పు" />
-            </button>
+            <button onClick={() => setShowAdd(true)}>Add first borrower</button>
           </div>
         </div>
       ) : (
@@ -67,12 +65,12 @@ export default function LoansScreen({ focusId, clearFocus }) {
 
       <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add">+</button>
 
-      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title="Add borrower" te="కొత్త అప్పు">
+      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title="Add borrower">
         <BorrowerForm onSaved={() => { setShowAdd(false); load(); }} />
       </Sheet>
 
       <Sheet open={!!opened} onClose={() => { setOpenId(null); clearFocus?.(); }}
-             title={opened ? opened.name : ''} te={opened ? 'వివరాలు' : ''}>
+             title={opened ? opened.name : ''}>
         {opened ? (
           <LoanDetail
             b={opened}
@@ -112,7 +110,7 @@ function LoanCard({ b, paidTotal, onClick }) {
           </div>
         </div>
         <div className="col" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
-          <span className="micro"><BL en="Remaining" te="రావాల్సింది" /></span>
+          <span className="micro">Remaining</span>
           <div className="num" style={{
             fontSize: 20, fontWeight: 600, marginTop: 2,
             color: completed ? 'var(--success)' : 'var(--accent)',
@@ -169,15 +167,15 @@ function LoanDetail({ b, paidTotal, payments, onChange, onClose }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="row between">
           <div className="col">
-            <span className="micro"><BL en="Given" te="ఇచ్చింది" /></span>
+            <span className="micro">Given</span>
             <div className="num" style={{ fontSize: 18, fontWeight: 600 }}>{db.fmtINR(b.amount_given)}</div>
           </div>
           <div className="col" style={{ alignItems: 'center' }}>
-            <span className="micro"><BL en="Total due" te="మొత్తం" /></span>
+            <span className="micro">Total due</span>
             <div className="num" style={{ fontSize: 18, fontWeight: 600 }}>{db.fmtINR(b.total_to_repay)}</div>
           </div>
           <div className="col" style={{ alignItems: 'flex-end' }}>
-            <span className="micro"><BL en="Remaining" te="రావాల్సింది" /></span>
+            <span className="micro">Remaining</span>
             <div className="num red" style={{ fontSize: 18, fontWeight: 600 }}>{db.fmtINR(remaining)}</div>
           </div>
         </div>
@@ -192,9 +190,7 @@ function LoanDetail({ b, paidTotal, payments, onChange, onClose }) {
       </div>
 
       <div className="row" style={{ gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-        <button onClick={() => setShowAdd(true)} style={{ flex: 1, minWidth: 140 }}>
-          + <BL en="Add payment" te="చెల్లింపు" />
-        </button>
+        <button onClick={() => setShowAdd(true)} style={{ flex: 1, minWidth: 140 }}>+ Add payment</button>
         <button className="ghost" onClick={() => setShowEdit(true)}>Edit</button>
         {b.status === 'active'
           ? <button className="ghost" onClick={markCompleted}>Mark cleared</button>
@@ -202,7 +198,7 @@ function LoanDetail({ b, paidTotal, payments, onChange, onClose }) {
       </div>
 
       <div className="section-h">
-        <h3><BL en="Payment history" te="చెల్లింపుల చరిత్ర" /></h3>
+        <h3>Payment history</h3>
         <span style={{ flex: 1 }} />
         <span className="small num">{payments.length}</span>
       </div>
@@ -229,14 +225,14 @@ function LoanDetail({ b, paidTotal, payments, onChange, onClose }) {
       <hr className="rule" />
       <button onClick={deleteBorrower} className="ghost"
         style={{ color: 'var(--accent)', borderColor: 'var(--accent)', width: '100%' }}>
-        <BL en="Delete borrower" te="తొలగించు" />
+        Delete borrower
       </button>
 
-      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title="Add payment" te="చెల్లింపు">
+      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title="Add payment">
         <PaymentSheet borrower={b} date={db.todayISO()} existing={[]}
                       onDone={() => { setShowAdd(false); onChange(); }} />
       </Sheet>
-      <Sheet open={showEdit} onClose={() => setShowEdit(false)} title="Edit borrower" te="మార్చు">
+      <Sheet open={showEdit} onClose={() => setShowEdit(false)} title="Edit borrower">
         <BorrowerForm initial={b} onSaved={() => { setShowEdit(false); onChange(); }} />
       </Sheet>
     </div>
@@ -264,13 +260,13 @@ function PaymentSheet({ borrower, date, existing, onDone }) {
   return (
     <div>
       <div className="small" style={{ marginBottom: 10 }}>
-        <BL en="for" te="వారికి" /> <strong>{borrower.name}</strong> · {prettyDate(date)}
+        for <strong>{borrower.name}</strong> · {prettyDate(date)}
       </div>
-      <Field label="Amount" te="మొత్తం">
+      <Field label="Amount">
         <input type="number" inputMode="numeric" value={amount}
                onChange={(e) => setAmount(e.target.value)} autoFocus />
       </Field>
-      <Field label="Note" te="గమనిక" hint="optional">
+      <Field label="Note" hint="optional">
         <input type="text" value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       <button onClick={save} disabled={busy} style={{ width: '100%', marginTop: 8 }}>
@@ -316,32 +312,32 @@ export function BorrowerForm({ initial, onSaved }) {
 
   return (
     <form onSubmit={save}>
-      <Field label="Name" te="పేరు">
+      <Field label="Name">
         <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
       </Field>
-      <Field label="Phone" te="ఫోన్" hint="optional">
+      <Field label="Phone" hint="optional">
         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Field label="Given" te="ఇచ్చింది" hint="₹">
+        <Field label="Given (₹)">
           <input type="number" inputMode="numeric" value={given}
                  onChange={(e) => setGiven(e.target.value)} required />
         </Field>
-        <Field label="Total to repay" te="మొత్తం" hint="₹">
+        <Field label="Total to repay (₹)">
           <input type="number" inputMode="numeric" value={total}
                  onChange={(e) => setTotal(e.target.value)} onBlur={autoDaily} required />
         </Field>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Field label="Daily" te="రోజువారీ" hint="₹">
+        <Field label="Daily (₹)">
           <input type="number" inputMode="numeric" value={daily}
                  onChange={(e) => setDaily(e.target.value)} />
         </Field>
-        <Field label="Start" te="ప్రారంభం">
+        <Field label="Start date">
           <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
         </Field>
       </div>
-      <Field label="Notes" te="గమనికలు" hint="optional">
+      <Field label="Notes" hint="optional">
         <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
       <button type="submit" disabled={busy} style={{ width: '100%', marginTop: 4 }}>

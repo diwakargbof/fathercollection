@@ -24,7 +24,7 @@
 html, body { margin: 0; padding: 0; }
 html { background: #1A1612; }
 body {
-  font-family: "Plus Jakarta Sans", "Noto Sans Telugu", -apple-system, system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", -apple-system, system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.45;
   color: var(--ink);
@@ -34,8 +34,6 @@ body {
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.005em;
 }
-.te { font-family: "Noto Sans Telugu", "Plus Jakarta Sans", sans-serif; }
-
 .shell {
   max-width: 480px;
   margin: 0 auto;

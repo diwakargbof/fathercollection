@@ -1,20 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function BL({ en, te, sep = ' · ' }) {
-  return (
-    <span>
-      <span>{en}</span>
-      {te ? (
-        <>
-          <span style={{ color: 'var(--faint)' }}>{sep}</span>
-          <span className="te">{te}</span>
-        </>
-      ) : null}
-    </span>
-  );
-}
-
-export function Sheet({ open, onClose, children, title, te }) {
+export function Sheet({ open, onClose, children, title }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -34,7 +20,6 @@ export function Sheet({ open, onClose, children, title, te }) {
         {title ? (
           <div className="section-h">
             <h2>{title}</h2>
-            {te ? <span className="te small">{te}</span> : null}
             <span style={{ flex: 1 }} />
             <button className="ghost tiny" onClick={onClose} aria-label="Close">✕</button>
           </div>
@@ -45,12 +30,11 @@ export function Sheet({ open, onClose, children, title, te }) {
   );
 }
 
-export function Field({ label, te, hint, children }) {
+export function Field({ label, hint, children }) {
   return (
     <label className="field">
       <span className="lbl">
         <span>{label}</span>
-        {te ? <span className="te">{te}</span> : null}
         {hint ? <span style={{ color: 'var(--faint)', fontSize: 12 }}>· {hint}</span> : null}
       </span>
       {children}
@@ -122,9 +106,9 @@ export function Spinner({ label }) {
 
 export function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return { en: 'Good morning', te: 'శుభోదయం' };
-  if (h < 17) return { en: 'Namaskaram', te: 'నమస్కారం' };
-  return { en: 'Good evening', te: 'శుభ సాయంత్రం' };
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export function prettyDate(iso) {

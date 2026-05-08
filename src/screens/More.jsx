@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { BL, Sheet, toast } from '../components/ui';
+import { Sheet, toast } from '../components/ui';
 import * as db from '../db';
 
 export default function MoreScreen() {
@@ -7,7 +7,7 @@ export default function MoreScreen() {
 
   return (
     <div className="page" style={{ paddingTop: 26 }}>
-      <div className="section-h"><h1><BL en="More" te="ఇంకా" /></h1></div>
+      <div className="section-h"><h1>More</h1></div>
 
       {/* Personal note from child */}
       <div style={{
@@ -24,40 +24,34 @@ export default function MoreScreen() {
           <p style={{ margin: 0, fontSize: 19, lineHeight: 1.5, fontWeight: 500 }}>
             You will be back to who you were earlier, Nanna.
           </p>
-          <p className="te" style={{ margin: '12px 0 0', fontSize: 17, lineHeight: 1.6, color: 'var(--soft)' }}>
-            మీరు మళ్లీ మీలా తయారవుతారు, నాన్న.
-          </p>
           <div className="micro" style={{ marginTop: 22, color: 'var(--accent)' }}>
-            — <BL en="from your child" te="మీ బిడ్డ" />
+            — from your child
           </div>
         </div>
       </div>
 
       {/* About */}
-      <div className="section-h"><h3><BL en="About" te="గురించి" /></h3></div>
+      <div className="section-h"><h3>About</h3></div>
       <div className="card small" style={{ marginBottom: 18, lineHeight: 1.6 }}>
         <p style={{ margin: 0 }}>
           A small ledger for Nanna's daily lending and chit work.
-          Every payment you tap stays on this device.
-        </p>
-        <p style={{ margin: '8px 0 0' }} className="te">
-          నాన్న గారి రోజువారీ అప్పులు, చిట్టీ కోసం.
+          Every payment you tap syncs to the server.
         </p>
       </div>
 
-      {/* Backup / restore */}
-      <div className="section-h"><h3><BL en="Backup" te="బ్యాకప్" /></h3></div>
+      {/* Backup */}
+      <div className="section-h"><h3>Backup</h3></div>
       <div className="card" style={{ marginBottom: 18 }}>
         <div className="row between">
           <div className="col">
             <span style={{ fontWeight: 500 }}>Save / restore your data</span>
-            <span className="small">Download a backup file, or load one in.</span>
+            <span className="small">Download a JSON backup, or restore from one.</span>
           </div>
           <button className="ghost tiny" onClick={() => setShowBackup(true)}>Open</button>
         </div>
       </div>
 
-      <Sheet open={showBackup} onClose={() => setShowBackup(false)} title="Backup" te="బ్యాకప్">
+      <Sheet open={showBackup} onClose={() => setShowBackup(false)} title="Backup">
         <BackupSheet onDone={() => setShowBackup(false)} />
       </Sheet>
     </div>
@@ -66,54 +60,64 @@ export default function MoreScreen() {
 
 function BackupSheet({ onDone }) {
   const fileRef = useRef(null);
+  const [busy, setBusy] = useState(false);
 
-  function download() {
-    const data = db.exportAll();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = `nanna-ledger-${db.todayISO()}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    toast('Backup downloaded');
+  async function download() {
+    setBusy(true);
+    try {
+      const data = await db.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `nanna-ledger-${db.todayISO()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast('Backup downloaded');
+    } catch { toast("Couldn't export"); }
+    finally { setBusy(false); }
   }
 
   function handleFile(e) {
     const f = e.target.files?.[0];
     if (!f) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(reader.result);
-        if (!confirm('Replace current data with this backup?')) return;
-        db.importAll(data);
+        if (!confirm('Merge this backup into the current data?')) return;
+        setBusy(true);
+        await db.importAll(data);
         toast('Restored ✓');
         onDone();
-        setTimeout(() => location.reload(), 400);
-      } catch { toast("Couldn't read that file"); }
+      } catch { toast("Couldn't restore — invalid file"); }
+      finally { setBusy(false); }
     };
     reader.readAsText(f);
   }
 
-  function clearAll() {
-    if (!confirm("Delete ALL data on this device? This can't be undone.")) return;
-    db.clearAll();
-    toast('Cleared');
-    setTimeout(() => location.reload(), 400);
+  async function clearAll() {
+    if (!confirm("Delete ALL data? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      await db.clearAll();
+      toast('All data cleared');
+      onDone();
+    } catch { toast("Couldn't clear data"); }
+    finally { setBusy(false); }
   }
 
   return (
     <div>
       <div className="small" style={{ marginBottom: 16, lineHeight: 1.6 }}>
-        Data is stored on this device only. Download a backup file once in a while — keep it safe.
+        Download a backup file once in a while and keep it safe.
       </div>
       <div className="col" style={{ gap: 10 }}>
-        <button onClick={download}>Download backup</button>
-        <button className="ghost" onClick={() => fileRef.current?.click()}>Restore from file…</button>
+        <button onClick={download} disabled={busy}>Download backup</button>
+        <button className="ghost" onClick={() => fileRef.current?.click()} disabled={busy}>Restore from file…</button>
         <input ref={fileRef} type="file" accept="application/json"
                onChange={handleFile} style={{ display: 'none' }} />
         <hr className="rule" />
-        <button className="ghost" onClick={clearAll}
+        <button className="ghost" onClick={clearAll} disabled={busy}
           style={{ color: 'var(--accent)', borderColor: 'var(--accent-soft)' }}>
           Erase all data
         </button>
