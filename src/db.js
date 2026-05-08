@@ -73,6 +73,12 @@ export async function updateChit(id, patch) {
   raise(error);
   return data;
 }
+export async function deleteChit(id) {
+  await supabase.from('chit_payments').delete().eq('chit_id', id);
+  await supabase.from('chit_members').delete().eq('chit_id', id);
+  const { error } = await supabase.from('chits').delete().eq('id', id);
+  raise(error);
+}
 
 // ── Chit members ─────────────────────────────────────────────────
 export async function listMembers(chitId) {
@@ -111,6 +117,61 @@ export async function setChitPayment(p) {
     .from('chit_payments')
     .upsert({ member_id, month, ...rest }, { onConflict: 'member_id,month' });
   raise(error);
+}
+
+// ── Audit log ────────────────────────────────────────────────────
+export async function listAuditLog(limit = 150) {
+  const { data, error } = await supabase
+    .from('audit_log').select('*')
+    .order('ts', { ascending: false })
+    .limit(limit);
+  raise(error);
+  return data || [];
+}
+
+export async function restoreFromAuditLog() {
+  const { data: events, error } = await supabase
+    .from('audit_log').select('*').order('ts', { ascending: true });
+  raise(error);
+  if (!events?.length) return 0;
+
+  // Compute the final intended state of every record from the log
+  const final = {};
+  for (const e of events) {
+    const key = `${e.tbl}:${e.rec_id}`;
+    if (e.op === 'DELETE') {
+      final[key] = { tbl: e.tbl, rec_id: e.rec_id, deleted: true };
+    } else {
+      final[key] = { tbl: e.tbl, rec_id: e.rec_id, data: e.after };
+    }
+  }
+
+  const toUpsert = {};
+  const toDelete = {};
+  for (const v of Object.values(final)) {
+    if (v.deleted) {
+      (toDelete[v.tbl] ??= []).push(v.rec_id);
+    } else {
+      (toUpsert[v.tbl] ??= []).push(v.data);
+    }
+  }
+
+  // Upsert surviving records in FK-safe order
+  for (const tbl of ['borrowers', 'chits', 'payments', 'chit_members', 'chit_payments']) {
+    if (toUpsert[tbl]?.length) {
+      const { error } = await supabase.from(tbl).upsert(toUpsert[tbl], { onConflict: 'id' });
+      raise(error);
+    }
+  }
+  // Delete removed records in reverse FK order (children first)
+  for (const tbl of ['chit_payments', 'chit_members', 'payments', 'chits', 'borrowers']) {
+    if (toDelete[tbl]?.length) {
+      const { error } = await supabase.from(tbl).delete().in('id', toDelete[tbl]);
+      raise(error);
+    }
+  }
+
+  return Object.keys(final).length;
 }
 
 // ── Backup / restore ──────────────────────────────────────────────

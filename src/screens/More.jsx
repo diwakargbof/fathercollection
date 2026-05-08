@@ -1,34 +1,14 @@
-import { useState, useRef } from 'react';
-import { Sheet, toast } from '../components/ui';
+import { useState, useEffect, useRef } from 'react';
+import { Sheet, Spinner, toast } from '../components/ui';
 import * as db from '../db';
 
 export default function MoreScreen() {
   const [showBackup, setShowBackup] = useState(false);
+  const [showAudit,  setShowAudit]  = useState(false);
 
   return (
     <div className="page" style={{ paddingTop: 26 }}>
       <div className="section-h"><h1>More</h1></div>
-
-      {/* Personal note from child */}
-      <div style={{
-        marginBottom: 28, padding: '28px 24px',
-        background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 16, position: 'relative', boxShadow: 'var(--shadow-sm)',
-      }}>
-        <div style={{
-          position: 'absolute', top: 12, left: 18,
-          color: 'var(--accent)', fontSize: 44, lineHeight: 1,
-          fontFamily: 'Georgia, serif', opacity: .35, fontWeight: 700,
-        }}>"</div>
-        <div style={{ paddingLeft: 22, paddingTop: 12 }}>
-          <p style={{ margin: 0, fontSize: 19, lineHeight: 1.5, fontWeight: 500 }}>
-            You will be back to who you were earlier, Nanna.
-          </p>
-          <div className="micro" style={{ marginTop: 22, color: 'var(--accent)' }}>
-            — from your child
-          </div>
-        </div>
-      </div>
 
       {/* About */}
       <div className="section-h"><h3>About</h3></div>
@@ -51,8 +31,24 @@ export default function MoreScreen() {
         </div>
       </div>
 
+      {/* Audit log */}
+      <div className="section-h"><h3>Audit log</h3></div>
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div className="row between">
+          <div className="col">
+            <span style={{ fontWeight: 500 }}>Every change, recorded</span>
+            <span className="small">View or replay the full operation history.</span>
+          </div>
+          <button className="ghost tiny" onClick={() => setShowAudit(true)}>View</button>
+        </div>
+      </div>
+
       <Sheet open={showBackup} onClose={() => setShowBackup(false)} title="Backup">
         <BackupSheet onDone={() => setShowBackup(false)} />
+      </Sheet>
+
+      <Sheet open={showAudit} onClose={() => setShowAudit(false)} title="Audit log">
+        <AuditLogSheet />
       </Sheet>
     </div>
   );
@@ -122,6 +118,93 @@ function BackupSheet({ onDone }) {
           Erase all data
         </button>
       </div>
+    </div>
+  );
+}
+
+function AuditLogSheet() {
+  const [entries, setEntries] = useState(null);
+  const [busy, setBusy]       = useState(false);
+
+  useEffect(() => {
+    db.listAuditLog(150)
+      .then(setEntries)
+      .catch(() => toast("Couldn't load audit log"));
+  }, []);
+
+  async function restore() {
+    if (!confirm('Replay the audit log to resync the database?\nThis will upsert all surviving records and remove deleted ones.')) return;
+    setBusy(true);
+    try {
+      const count = await db.restoreFromAuditLog();
+      toast(`Resynced ${count} records ✓`);
+    } catch { toast("Restore failed"); }
+    finally { setBusy(false); }
+  }
+
+  function describe(e) {
+    const d = e.after || e.before || {};
+    switch (e.tbl) {
+      case 'borrowers':     return d.name || '—';
+      case 'payments':      return `₹${d.amount ?? '?'} · ${d.date ?? ''}`;
+      case 'chits':         return d.name || '—';
+      case 'chit_members':  return `${d.name || '—'} · month ${d.payout_month ?? '?'}`;
+      case 'chit_payments': return `month ${d.month ?? '?'} · ${d.paid ? 'paid' : 'unpaid'}`;
+      default:              return d.id || '—';
+    }
+  }
+
+  function fmtTs(ts) {
+    const d = new Date(ts);
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())} ${mo} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  const opColor = { INSERT: 'var(--success)', UPDATE: 'var(--gold)', DELETE: 'var(--accent)' };
+  const tblLabel = { borrowers: 'borrower', payments: 'payment', chits: 'chit', chit_members: 'member', chit_payments: 'chit pay' };
+
+  return (
+    <div>
+      <div className="row between" style={{ marginBottom: 14, gap: 8 }}>
+        <span className="small fade">Last 150 operations · newest first</span>
+        <button className="ghost tiny" onClick={restore} disabled={busy}>
+          {busy ? 'Resyncing…' : 'Restore DB from log'}
+        </button>
+      </div>
+
+      {entries === null ? (
+        <Spinner />
+      ) : entries.length === 0 ? (
+        <div className="empty"><div className="glyph">·</div>No entries yet — run schema_audit.sql first.</div>
+      ) : (
+        <div className="col" style={{ gap: 0 }}>
+          {entries.map((e) => (
+            <div key={e.id} className="row between" style={{
+              padding: '9px 4px', borderBottom: '1px dashed var(--border)', gap: 10,
+            }}>
+              <div className="col" style={{ minWidth: 0, flex: 1 }}>
+                <div className="row" style={{ gap: 6, alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '.06em',
+                    color: opColor[e.op] || 'var(--ink)',
+                  }}>{e.op}</span>
+                  <span className="micro fade">{tblLabel[e.tbl] ?? e.tbl}</span>
+                </div>
+                <span className="small" style={{
+                  color: 'var(--soft)', whiteSpace: 'nowrap',
+                  overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  {describe(e)}
+                </span>
+              </div>
+              <span className="micro fade" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {fmtTs(e.ts)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -227,7 +227,8 @@ export default function ChitScreen() {
       </Sheet>
 
       <Sheet open={editChit} onClose={() => setEditChit(false)} title="Edit chit">
-        <ChitForm initial={chit} onSaved={() => { setEditChit(false); load(); }} />
+        <ChitForm initial={chit} onSaved={() => { setEditChit(false); load(); }}
+                  onDeleted={() => { setEditChit(false); load(); }} />
       </Sheet>
     </div>
   );
@@ -331,7 +332,7 @@ function MonthSheet({ chit, month, members, pays, recipient, onChange }) {
   );
 }
 
-function ChitForm({ initial, onSaved }) {
+function ChitForm({ initial, onSaved, onDeleted }) {
   const [name,    setName]    = useState(initial?.name || 'Main chit');
   const [monthly, setMonthly] = useState(initial ? String(initial.monthly_amount) : '5000');
   const [num,     setNum]     = useState(initial ? String(initial.num_months) : '20');
@@ -352,6 +353,15 @@ function ChitForm({ initial, onSaved }) {
     finally { setBusy(false); }
   }
 
+  async function del() {
+    if (!initial) return;
+    if (!confirm(`Delete "${initial.name}" and all its members and payments?`)) return;
+    setBusy(true);
+    try { await db.deleteChit(initial.id); onDeleted?.(); }
+    catch { toast("Couldn't delete"); }
+    finally { setBusy(false); }
+  }
+
   return (
     <form onSubmit={save}>
       <Field label="Name">
@@ -368,9 +378,17 @@ function ChitForm({ initial, onSaved }) {
       <Field label="Start month" hint="YYYY-MM">
         <input value={start} onChange={(e) => setStart(e.target.value)} placeholder="2024-01" required />
       </Field>
-      <button type="submit" disabled={busy} style={{ width: '100%' }}>
-        {busy ? 'Saving…' : initial ? 'Save' : 'Create chit'}
-      </button>
+      <div className="row" style={{ gap: 8 }}>
+        <button type="submit" disabled={busy} style={{ flex: 1 }}>
+          {busy ? 'Saving…' : initial ? 'Save' : 'Create chit'}
+        </button>
+        {initial ? (
+          <button type="button" className="ghost" onClick={del} disabled={busy}
+            style={{ color: 'var(--accent)', borderColor: 'var(--accent)' }}>
+            Delete
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }

@@ -147,17 +147,6 @@ export default function TodayScreen({ navigate }) {
         </div>
       )}
 
-      {/* Note from child */}
-      <div style={{
-        marginTop: 32, paddingTop: 18,
-        borderTop: '1px dashed var(--border)',
-        color: 'var(--faint)', fontSize: 13, fontStyle: 'italic',
-        textAlign: 'center', lineHeight: 1.6,
-      }}>
-        You will be back to who you were earlier, Nanna.
-        <div style={{ marginTop: 4, fontSize: 11, letterSpacing: '.1em' }}>— your child</div>
-      </div>
-
       <Sheet open={!!editing} onClose={() => setEditing(null)}
              title={editing ? `Payment · ${editing.name}` : ''}>
         {editing ? (
